@@ -4,8 +4,9 @@
 # Contributor: Juergen Hoetzel <juergen@archlinux.org>
 # Contributor: Gregor Ibic <gregor.ibic@intelicom.si>
 
-pkgname=dia
-pkgver=0.97.3
+pkgname=dia-git
+_pkgname=dia
+pkgver=0.97.0.1776.gfbc3061
 pkgrel=1
 pkgdesc="A GTK+ based diagram creation program"
 arch=('i686' 'x86_64')
@@ -16,22 +17,29 @@ depends=('libxslt' 'desktop-file-utils' 'libart-lgpl' 'gtk2' 'hicolor-icon-theme
 makedepends=('intltool' 'python2' 'docbook-xsl')
 optdepends=('python2')
 options=('docs' '!emptydirs')
-source=("ftp://ftp.gnome.org/pub/gnome/sources/${pkgname}/0.97/${pkgname}-${pkgver}.tar.xz")
-md5sums=('0e744a0f6a6c4cb6a089e4d955392c3c')
+source=("dia::git://git.gnome.org/dia#branch=master")
+noextract=()
+md5sums=('SKIP')
+
+pkgver() {
+  cd "${srcdir}/${_pkgname}"
+  git describe --always | sed -e 's/-/./g' -e 's/DIA_//' -e 's/_/./g'
+}
 
 prepare() {
-  cd "${srcdir}/${pkgname}-${pkgver}"
+  cd "${srcdir}/${_pkgname}"
   for file in `find -type f -name '*.py'`; do
       sed -i 's_#!/usr/bin/env python_#!/usr/bin/env python2_' "$file"
   done
-  sed -i 's#python2\.1#python2 python2.1#' configure
+  sed -i 's#python python2\.1#python2 python2.1#' acinclude.m4
+  sed -i 's#python-config#python2-config#' acinclude.m4
 }
 
 build() {
-  cd "${srcdir}/${pkgname}-${pkgver}"
+  cd "${srcdir}/${_pkgname}"
 
   export PYTHON=/usr/bin/python2
-  ./configure --prefix=/usr \
+  ./autogen.sh --prefix=/usr \
     --with-cairo \
     --with-python \
     --disable-gnome \
@@ -43,7 +51,7 @@ build() {
 }
 
 package() {
-  cd "${srcdir}/${pkgname}-${pkgver}"
+  cd "${srcdir}/${_pkgname}"
   make DESTDIR="${pkgdir}" install
   cd doc
   make DESTDIR="${pkgdir}" install-html
